@@ -1,0 +1,18 @@
+{
+    "Main" : {
+      "key" : {
+        "type" : "Text",
+        "config" : {
+          "label" : "Key",
+          "placeholder" : "e.g. in"
+        }
+      },
+      "url" : {
+        "type" : "Link",
+        "config" : {
+          "label" : "URL",
+          "placeholder" : "e.g. https://www.linkedin.com/company/cloudthing/"
+        }
+      }
+    }
+  }

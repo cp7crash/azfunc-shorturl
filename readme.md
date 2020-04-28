@@ -37,7 +37,8 @@ Sample `local.settings.json` for our https://ct.lol domain
     "AccountName": "ctlol",
     "TableName": "ctlol",
     "AccountKey": "<a storage account key>",
-    "DefaultRedirect": "https://cloudthing.com"
+    "DefaultRedirect": "https://cloudthing.com",
+    "refreshKey": "<a secret>"
   },
   "ConnectionStrings": {
   }

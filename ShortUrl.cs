@@ -21,26 +21,30 @@ namespace SirSuperGeek.AzFunc.ShortUrl
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "{*all}")] HttpRequest req, ILogger log)
         {
             
-            string defaultUrl = Environment.GetEnvironmentVariable("DefaultRedirect");
-            string redirectUrl;
-
             var badChars = "/\\".ToCharArray();
             string shortUrl = req.Path;
             shortUrl = shortUrl.TrimStart(badChars).TrimEnd(badChars);
+            var refreshKey = Environment.GetEnvironmentVariable("ShortUrl.RefreshKey");
+
+            if(string.Equals(shortUrl,refreshKey))
+                return RefreshContent();
+            
+            string defaultUrl = Environment.GetEnvironmentVariable("ShortUrl.DefaultRedirect");
+            string redirectUrl;
 
             log.LogInformation(string.Format("Short URL requested for {0}, seeking key '{1}'", req.Path, shortUrl));
 
             var cachedUrl = urlCache.Get(shortUrl);
             if (cachedUrl == null) {
             
-                var storageCreds = new StorageCredentials(Environment.GetEnvironmentVariable("AccountName"),Environment.GetEnvironmentVariable("AccountKey"));
+                var storageCreds = new StorageCredentials(Environment.GetEnvironmentVariable("Storage.AccountName"),Environment.GetEnvironmentVariable("Storage.AccountKey"));
                 var storageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
                 var storageClient = storageAccount.CreateCloudTableClient();
-                var storageTable = storageClient.GetTableReference(Environment.GetEnvironmentVariable("TableName"));
+                var storageTable = storageClient.GetTableReference(Environment.GetEnvironmentVariable("Table.Name"));
                 
                 var query = new TableQuery<ShortenerRow>().Where(
                     TableQuery.CombineFilters(
-                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, Environment.GetEnvironmentVariable("PartitionKey")),
+                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, Environment.GetEnvironmentVariable("Table.PartitionKey")),
                         TableOperators.And,
                         TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, shortUrl)
                     )
@@ -67,6 +71,15 @@ namespace SirSuperGeek.AzFunc.ShortUrl
             }
 
             return new RedirectResult(redirectUrl, false);
+        }
+    
+        private static IActionResult RefreshContent() {
+            
+            
+            log.LogInformation(string.Format("Refresh requestedCache hit! Redirecting to {0}", cachedUrl));
+            return new AcceptedResult();
+            
+            return new BadRequestResult();
         }
     }
 }
