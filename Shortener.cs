@@ -28,7 +28,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl
             string shortUrl = req.Path;
             shortUrl = shortUrl.TrimStart(badChars).TrimEnd(badChars);
 
-            log.LogInformation(string.Format("Short URL requested for {0}, seeking url for key '{1}'", req.Path, shortUrl));
+            log.LogInformation(string.Format("Short URL requested for {0}, seeking key '{1}'", req.Path, shortUrl));
 
             var cachedUrl = urlCache.Get(shortUrl);
             if (cachedUrl == null) {
@@ -48,16 +48,17 @@ namespace SirSuperGeek.AzFunc.ShortUrl
                 var recordSet = storageTable.ExecuteQuery(query).ToList();
 
                 if(recordSet.Count == 0) {
-                    log.LogInformation(String.Format("Table query returned no results, redirect/302ing to {0} (default)", defaultUrl));
+                    log.LogInformation(String.Format("Table query returned no result, redirect/302ing to {0} (default)", defaultUrl));
                     redirectUrl = defaultUrl;
                 } else {
-                    log.LogInformation(string.Format("Table query returned {0}, storing in cache and redirect/302ing", recordSet[0].Url));
+                    log.LogInformation(string.Format("Table query returned {0}, redirect/302ing", recordSet[0].Url));
                     redirectUrl = recordSet[0].Url;
                 }
 
+                // add key to cache regardless to minimise requests for undefined keys
                 var policy = new MemoryCacheEntryOptions();
                 policy.Priority = CacheItemPriority.Normal;
-                policy.AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(5);
+                policy.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
                 urlCache.Set(shortUrl, redirectUrl, policy);
 
             } else {
