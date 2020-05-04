@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -9,54 +11,44 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Cosmos.Table;
 
-namespace SirSuperGeek.AzFunc.ShortUrl
-{
-    public static class Shortener
-    {
+namespace SirSuperGeek.AzFunc.ShortUrl {
+    
+    using Prismic;
+    public static class ShortUrl {
         
         static MemoryCache urlCache = new MemoryCache(new MemoryCacheOptions());
+        static ILogger log;
 
-        [FunctionName("Shortener")]
+        [FunctionName("ShortUrl")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "{*all}")] HttpRequest req, ILogger log)
-        {
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "{*all}")] HttpRequest req, ILogger logger) {
             
+            log = logger;
+
             var badChars = "/\\".ToCharArray();
             string shortUrl = req.Path;
             shortUrl = shortUrl.TrimStart(badChars).TrimEnd(badChars);
-            var refreshKey = Environment.GetEnvironmentVariable("ShortUrl.RefreshKey");
 
-            if(string.Equals(shortUrl,refreshKey))
-                return RefreshContent();
+            if(string.Equals(shortUrl, config("CmsRefreshKey"))) {
+                await Task.Run(() => {
+                    return refreshFromCms();
+                });
+            }
             
-            string defaultUrl = Environment.GetEnvironmentVariable("ShortUrl.DefaultRedirect");
             string redirectUrl;
-
-            log.LogInformation(string.Format("Short URL requested for {0}, seeking key '{1}'", req.Path, shortUrl));
+            log.LogInformation($"Short URL requested for {req.Path}, seeking key '{shortUrl}'");
 
             var cachedUrl = urlCache.Get(shortUrl);
             if (cachedUrl == null) {
-            
-                var storageCreds = new StorageCredentials(Environment.GetEnvironmentVariable("Storage.AccountName"),Environment.GetEnvironmentVariable("Storage.AccountKey"));
-                var storageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
-                var storageClient = storageAccount.CreateCloudTableClient();
-                var storageTable = storageClient.GetTableReference(Environment.GetEnvironmentVariable("Table.Name"));
-                
-                var query = new TableQuery<ShortenerRow>().Where(
-                    TableQuery.CombineFilters(
-                        TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, Environment.GetEnvironmentVariable("Table.PartitionKey")),
-                        TableOperators.And,
-                        TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, shortUrl)
-                    )
-                );
-                var recordSet = storageTable.ExecuteQuery(query).ToList();
 
-                if(recordSet.Count == 0) {
-                    log.LogInformation(String.Format("Table query returned no result, redirect/302ing to {0} (default)", defaultUrl));
+                string defaultUrl = config("DefaultRedirect");
+                var targetUrl = seekInTable(shortUrl);
+                if(targetUrl == null) {
+                    log.LogInformation($"Table query returned no result, redirect/302ing to {defaultUrl} (default)");
                     redirectUrl = defaultUrl;
                 } else {
-                    log.LogInformation(string.Format("Table query returned {0}, redirect/302ing", recordSet[0].Url));
-                    redirectUrl = recordSet[0].Url;
+                    log.LogInformation($"Table query returned {targetUrl}, redirect/302ing");
+                    redirectUrl = targetUrl;
                 }
 
                 // add key to cache regardless to minimise requests for undefined keys
@@ -66,20 +58,60 @@ namespace SirSuperGeek.AzFunc.ShortUrl
                 urlCache.Set(shortUrl, redirectUrl, policy);
 
             } else {
-                log.LogInformation(string.Format("Cache hit! Redirecting to {0}", cachedUrl));
+                log.LogInformation($"Cache hit! Redirecting to {cachedUrl}");
                 redirectUrl = cachedUrl.ToString();
             }
 
             return new RedirectResult(redirectUrl, false);
         }
-    
-        private static IActionResult RefreshContent() {
+
+        private static string seekInTable(string key) {
+
+            var storageTable = table;
             
+            var query = new TableQuery<TableRow>().Where(
+                TableQuery.CombineFilters(
+                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, config("PartitionKey")),
+                    TableOperators.And,
+                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, key)
+                )
+            );
+            var recordSet = storageTable.ExecuteQuery(query).ToList();
+
+            return (recordSet.Count() == 0) ? null : recordSet[0].Url;
+
+        }
+
+        private static CloudTable table { get {
+
+            var storageCreds = new StorageCredentials(config("StorageAccount"), config("StorageKey"));
+            var storageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
+            var storageClient = storageAccount.CreateCloudTableClient();
+            return storageClient.GetTableReference(config("TableName"));
+
+        }}
+
+        private static async Task<IActionResult> refreshFromCms() {
+        
+            var cmsHandler = new PrismicHandler(config("CmsType"), config("CmsSettings"), ref log);
+            await cmsHandler.GetContentItems();
+
+            //var cmsHandlerType = Type.GetType(string.Format("{0}Handler", config("CmsType")));
+            //CmsHandler cmsHandler = Activator.CreateInstance<CmsHandler>(cmsHandlerType);
+
             
-            log.LogInformation(string.Format("Refresh requestedCache hit! Redirecting to {0}", cachedUrl));
-            return new AcceptedResult();
+            return new OkResult();
             
-            return new BadRequestResult();
+        }
+
+        private static string config(string configItemName) {
+
+            var configValue = Environment.GetEnvironmentVariable($"ShortUrl.{configItemName}");
+            if(String.IsNullOrEmpty(configValue))
+                log.LogError($"Unable to find a value for {configItemName}");
+            
+            return configValue;
+
         }
     }
 }
