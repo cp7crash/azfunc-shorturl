@@ -44,7 +44,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl.Prismic {
             }
             
             string contentFilter = WebUtility.UrlEncode($"[[at(document.type, \"{contentType}\")]]");
-            return await getPageOfItems(contentFilter, 1);
+            return await getPageOfItems(contentFilter, 100);
 
        }
 

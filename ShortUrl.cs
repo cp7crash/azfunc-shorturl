@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace SirSuperGeek.AzFunc.ShortUrl {
     
     using Prismic;
-    
+
     public static class ShortUrl {
         
         static MemoryCache urlCache = new MemoryCache(new MemoryCacheOptions());
@@ -29,7 +29,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
             shortUrl = shortUrl.TrimStart(badChars).TrimEnd(badChars);
 
             if(string.Equals(shortUrl, config("CmsRefreshKey"))) {
-                await Task.Run(() => {
+                return await Task.Run(() => {
                     return refreshFromCms();
                 });
             }
@@ -40,7 +40,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
             var cachedUrl = urlCache.Get(shortUrl);
             if (cachedUrl == null) {
 
-                var tableClient = new TableHandler(config("StorageAccount"), config("StorageKey"), config("TableName"), config("PartitionKey"));
+                var tableClient = getTableClient();
                 string defaultUrl = config("DefaultRedirect");
                 var targetUrl = tableClient.Seek(shortUrl);
                 if(targetUrl == null) {
@@ -84,6 +84,9 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
                 log.LogWarning($"Unable to refresh content from CMS, {cmsHandler.ContentItems.Count()} items discovered.");
                 return new NoContentResult();
             }
+
+            var tableClient = getTableClient();
+            tableClient.Store(cmsHandler.ContentItems);
                 
 
             //var cmsHandlerType = Type.GetType(string.Format("{0}Handler", config("CmsType")));
@@ -92,6 +95,11 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
             
             return new OkResult();
             
+        }
+
+        private static TableHandler getTableClient() {
+
+            return new TableHandler(config("StorageAccount"), config("StorageKey"), config("TableName"), config("PartitionKey"), log);
         }
 
         private static string config(string configItemName) {

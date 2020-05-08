@@ -1,6 +1,7 @@
 using Microsoft.Azure.Cosmos.Table;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace SirSuperGeek.AzFunc.ShortUrl {
 
@@ -8,15 +9,16 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
         public CloudTable TableClient;
         public readonly string PartitionKey;
+        protected ILogger _log;
 
-        
-        public TableHandler(string storageAccount, string accountKey, string tableName, string partitionKey) {
+        public TableHandler(string storageAccount, string accountKey, string tableName, string partitionKey, ILogger log) {
 
             var creds = new StorageCredentials(storageAccount, accountKey);
             var account = new CloudStorageAccount(creds, useHttps: true);
             var client = account.CreateCloudTableClient();
             TableClient = client.GetTableReference(tableName);
             PartitionKey = partitionKey;
+            _log = log;
 
         }
 
@@ -42,6 +44,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
                 item.PartitionKey = PartitionKey;
                 batch.InsertOrReplace(item);
             }
+            _log.LogInformation($"Attempting batch insert of {batch.Count}");
             
             TableClient.ExecuteBatch(batch);
 
