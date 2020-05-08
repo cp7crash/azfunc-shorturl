@@ -61,7 +61,14 @@ namespace SirSuperGeek.AzFunc.ShortUrl.Prismic {
                 return new NoContentResult();
 
             foreach(Result result in resultsResponse.ResultsResults)
-                ContentItems.Add(new ShortUrlItem() {RowKey = result.Data.Key, Url = result.Data.Url.UrlUrl.OriginalString});
+                if(result.Data != null &&
+                   !String.IsNullOrEmpty(result.Data.Key) && 
+                   result.Data.Url != null && 
+                   result.Data.Url.UrlUrl != null &&
+                   !String.IsNullOrEmpty(result.Data.Url.UrlUrl.OriginalString))
+                    ContentItems.Add(new ShortUrlItem() {RowKey = result.Data.Key, Url = result.Data.Url.UrlUrl.OriginalString});
+                else
+                    _log.LogWarning($"Skipping result with id {result.Id} as it's missing a valid key or url");
 
             if(resultsResponse.TotalPages > pageNumber)
                 return await getPageOfItems(filter, pageSize, pageNumber + 1);

@@ -35,10 +35,15 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
         }
 
-        public void Store (List<ContentItem> contentItems) {
+        public void Store (List<ShortUrlItem> contentItems) {
 
             var batch = new TableBatchOperation();
+            foreach(ShortUrlItem item in contentItems) {
+                item.PartitionKey = PartitionKey;
+                batch.InsertOrReplace(item);
+            }
             
+            TableClient.ExecuteBatch(batch);
 
         }
     }
