@@ -1,5 +1,6 @@
 using Microsoft.Azure.Cosmos.Table;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace SirSuperGeek.AzFunc.ShortUrl {
 
@@ -21,7 +22,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
         public string Seek(string key) {
             
-            var query = new TableQuery<TableRow>().Where(
+            var query = new TableQuery<ShortUrlItem>().Where(
                 TableQuery.CombineFilters(
                     TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, PartitionKey),
                     TableOperators.And,
@@ -34,6 +35,12 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
         }
 
+        public void Store (List<ContentItem> contentItems) {
+
+            var batch = new TableBatchOperation();
+            
+
+        }
     }
 
 

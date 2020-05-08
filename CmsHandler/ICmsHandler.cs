@@ -8,7 +8,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
         string Type { get; }
 
-        List<ContentItem> ContentItems { get; }
+        List<ShortUrlItem> ContentItems { get; }
         
         Task<IActionResult> GetContentItems();
 

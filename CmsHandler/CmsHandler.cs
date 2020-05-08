@@ -11,14 +11,14 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
         public string Type { get => _type; }
         public Hashtable Settings { get; }
         protected ILogger _log;
-        public List<ContentItem> ContentItems { get; }
+        public List<ShortUrlItem> ContentItems { get; }
 
         public CmsHandler(string cmsType, string cmsSettings, ref ILogger log) {
             
             _type = cmsType;
             Settings = new Hashtable();
             _log = log;
-            ContentItems = new List<ContentItem>();
+            ContentItems = new List<ShortUrlItem>();
 
             string[] statements = cmsSettings.Split(',');
             foreach(string statement in statements) {

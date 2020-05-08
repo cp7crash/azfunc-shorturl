@@ -1,7 +1,5 @@
 using System;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -14,13 +12,13 @@ using Microsoft.Extensions.Logging;
 namespace SirSuperGeek.AzFunc.ShortUrl {
     
     using Prismic;
+    
     public static class ShortUrl {
         
         static MemoryCache urlCache = new MemoryCache(new MemoryCacheOptions());
         static ILogger log;
 
-        
-        
+
         [FunctionName("ShortUrl")]
         public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "{*all}")] HttpRequest req, ILogger logger) {
             
@@ -66,8 +64,6 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
             return new RedirectResult(redirectUrl, false);
         }
-
-        
 
         private static async Task<IActionResult> refreshFromCms() {
         

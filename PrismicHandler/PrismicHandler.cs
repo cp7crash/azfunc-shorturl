@@ -61,7 +61,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl.Prismic {
                 return new NoContentResult();
 
             foreach(Result result in resultsResponse.ResultsResults)
-                ContentItems.Add(new ContentItem() {Key = result.Data.Key, Url = result.Data.Url.UrlUrl.OriginalString});
+                ContentItems.Add(new ShortUrlItem() {RowKey = result.Data.Key, Url = result.Data.Url.UrlUrl.OriginalString});
 
             if(resultsResponse.TotalPages > pageNumber)
                 return await getPageOfItems(filter, pageSize, pageNumber + 1);
