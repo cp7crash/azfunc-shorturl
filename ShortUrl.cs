@@ -9,7 +9,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Microsoft.Azure.Cosmos.Table;
+
 
 namespace SirSuperGeek.AzFunc.ShortUrl {
     
@@ -19,9 +19,10 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
         static MemoryCache urlCache = new MemoryCache(new MemoryCacheOptions());
         static ILogger log;
 
+        
+        
         [FunctionName("ShortUrl")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "{*all}")] HttpRequest req, ILogger logger) {
+        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = "{*all}")] HttpRequest req, ILogger logger) {
             
             log = logger;
 
@@ -41,8 +42,9 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
             var cachedUrl = urlCache.Get(shortUrl);
             if (cachedUrl == null) {
 
+                var tableClient = new TableHandler(config("StorageAccount"), config("StorageKey"), config("TableName"), config("PartitionKey"));
                 string defaultUrl = config("DefaultRedirect");
-                var targetUrl = seekInTable(shortUrl);
+                var targetUrl = tableClient.Seek(shortUrl);
                 if(targetUrl == null) {
                     log.LogInformation($"Table query returned no result, redirect/302ing to {defaultUrl} (default)");
                     redirectUrl = defaultUrl;
@@ -65,36 +67,28 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
             return new RedirectResult(redirectUrl, false);
         }
 
-        private static string seekInTable(string key) {
-
-            var storageTable = table;
-            
-            var query = new TableQuery<TableRow>().Where(
-                TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, config("PartitionKey")),
-                    TableOperators.And,
-                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, key)
-                )
-            );
-            var recordSet = storageTable.ExecuteQuery(query).ToList();
-
-            return (recordSet.Count() == 0) ? null : recordSet[0].Url;
-
-        }
-
-        private static CloudTable table { get {
-
-            var storageCreds = new StorageCredentials(config("StorageAccount"), config("StorageKey"));
-            var storageAccount = new CloudStorageAccount(storageCreds, useHttps: true);
-            var storageClient = storageAccount.CreateCloudTableClient();
-            return storageClient.GetTableReference(config("TableName"));
-
-        }}
+        
 
         private static async Task<IActionResult> refreshFromCms() {
         
+            if(string.IsNullOrEmpty(config("CmsType"))) {
+                log.LogError($"Unable to refresh content from CMS as CmsType not set");
+                return new NoContentResult();
+            }
+
             var cmsHandler = new PrismicHandler(config("CmsType"), config("CmsSettings"), ref log);
-            await cmsHandler.GetContentItems();
+            var resultObj = await cmsHandler.GetContentItems();
+
+            if(resultObj.GetType() != typeof(OkResult)) {
+                log.LogError($"Unable to refresh content from CMS, call returned {resultObj.GetType()}");
+                return resultObj;
+            }
+
+            if(cmsHandler.ContentItems.Count() < 1) {
+                log.LogWarning($"Unable to refresh content from CMS, {cmsHandler.ContentItems.Count()} items discovered.");
+                return new NoContentResult();
+            }
+                
 
             //var cmsHandlerType = Type.GetType(string.Format("{0}Handler", config("CmsType")));
             //CmsHandler cmsHandler = Activator.CreateInstance<CmsHandler>(cmsHandlerType);
@@ -108,7 +102,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
             var configValue = Environment.GetEnvironmentVariable($"ShortUrl.{configItemName}");
             if(String.IsNullOrEmpty(configValue))
-                log.LogError($"Unable to find a value for {configItemName}");
+                log.LogWarning($"Unable to find a value for {configItemName}");
             
             return configValue;
 
