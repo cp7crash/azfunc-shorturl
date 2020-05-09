@@ -90,11 +90,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
             var tableClient = getTableClient();
             tableClient.Store(cmsHandler.ContentItems);
-                
-
-            
-
-            
+                            
             return new OkResult();
             
         }
