@@ -10,6 +10,8 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
         public CloudTable TableClient;
         public readonly string PartitionKey;
         protected ILogger _log;
+        private List<ShortUrlItem> urlItems;
+        private int batchSize = 100;
 
         public TableHandler(string storageAccount, string accountKey, string tableName, string partitionKey, ILogger log) {
 
@@ -39,14 +41,29 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
         public void Store (List<ShortUrlItem> contentItems) {
 
+            urlItems = contentItems;
+            storeBatch(0);
+
+        }
+
+        public void storeBatch(int startPointer) {
+
+            int endPointer = startPointer + batchSize;
+            if(endPointer > urlItems.Count - 1) 
+                endPointer = urlItems.Count;
             var batch = new TableBatchOperation();
-            foreach(ShortUrlItem item in contentItems) {
-                item.PartitionKey = PartitionKey;
-                batch.InsertOrReplace(item);
+
+            for(int i = startPointer; i < endPointer; i++) {
+                urlItems[i].PartitionKey = PartitionKey;
+                batch.InsertOrReplace(urlItems[i]);
             }
-            _log.LogInformation($"Attempting batch insert of {batch.Count}");
             
+            _log.LogInformation($"Batch inserting {batch.Count} items, {startPointer} to {endPointer} of {urlItems.Count} total");
             TableClient.ExecuteBatch(batch);
+
+            if(endPointer < urlItems.Count)
+                storeBatch(endPointer);
+
 
         }
     }

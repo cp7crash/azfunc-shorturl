@@ -56,4 +56,4 @@ Sample `local.settings.json` for our https://ct.lol domain
 On deployment, relevant configuration will need setting manually within azure console or via an ARM template.
 
 ## Known Issues
-1. Upon refresh from CMS, short urls are inserted or overwritten only, therrfore it doesn't currently support removal of URLs. Workaround: use storage explorer
+1. Upon refresh from CMS, short urls are inserted or overwritten only, therefore it doesn't currently support removal/un-publish of URLs. Workaround: use storage explorer.
