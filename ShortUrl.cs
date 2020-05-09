@@ -43,8 +43,8 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
                 var tableClient = getTableClient();
                 string defaultUrl = config("DefaultRedirect");
                 var targetUrl = tableClient.Seek(shortUrl);
-                if(targetUrl == null) {
-                    log.LogInformation($"Table query returned no result, redirect/302ing to {defaultUrl} (default)");
+                if(string.IsNullOrEmpty(targetUrl)) {
+                    log.LogInformation($"Table query returned no or empty result, redirect/302ing to {defaultUrl} (default)");
                     redirectUrl = defaultUrl;
                 } else {
                     log.LogInformation($"Table query returned {targetUrl}, redirect/302ing");
