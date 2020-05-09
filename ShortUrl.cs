@@ -67,12 +67,15 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
 
         private static async Task<IActionResult> refreshFromCms() {
         
-            if(string.IsNullOrEmpty(config("CmsType"))) {
+            var cmsType = config("CmsType");
+            if(string.IsNullOrEmpty(cmsType)) {
                 log.LogError($"Unable to refresh content from CMS as CmsType not set");
                 return new NoContentResult();
             }
-
-            var cmsHandler = new PrismicHandler(config("CmsType"), config("CmsSettings"), ref log);
+            var handlerType = Type.GetType(string.Format("SirSuperGeek.AzFunc.ShortUrl.{0}.{0}Handler", cmsType));
+            
+            log.LogInformation($"Attempting to activate an instance of {handlerType}");
+            var cmsHandler = (CmsHandler)Activator.CreateInstance(handlerType, config("CmsType"), config("CmsSettings"), log);
             var resultObj = await cmsHandler.GetContentItems();
 
             if(resultObj.GetType() != typeof(OkResult)) {
@@ -89,8 +92,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
             tableClient.Store(cmsHandler.ContentItems);
                 
 
-            //var cmsHandlerType = Type.GetType(string.Format("{0}Handler", config("CmsType")));
-            //CmsHandler cmsHandler = Activator.CreateInstance<CmsHandler>(cmsHandlerType);
+            
 
             
             return new OkResult();

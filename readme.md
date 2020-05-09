@@ -23,7 +23,7 @@ Short domains should be short, but as custom domains for functions depend upon C
 0. With a bit of luck, that's it!
 
 # CMS Refresh Setup
-The function can be set up to pull in documents and build the storage table through a back-end CMS, assuming the appropriate cms settings are provided. The desired CMS handler can be specified through the `CmsType` configuration entry, it's associated settings within a comma delimited list within `CmsSettings` and a private/special URL within `CmsRefreshKey`. CMS handlers can be built through the `ICmsHandler` interface and `CmsHandler` base class and the following pre-built handlers are included:
+The function can be set up to pull in documents and build the storage table through a back-end CMS, assuming the appropriate cms settings are provided. The desired CMS handler can be specified through the `CmsType` configuration entry, it's associated settings within a comma delimited list within `CmsSettings` and a private/special URL within `CmsRefreshKey`. CMS handlers can be built through the `CmsHandler` base class and the following pre-built handlers are included:
 
 0. [Prismic.io](PrismicHandler/prismic-setup.md)
 

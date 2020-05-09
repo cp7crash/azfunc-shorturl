@@ -18,7 +18,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl.Prismic {
         private string targetRef;
         private HttpClient apiClient;
         
-        public PrismicHandler(string cmsType, string cmsSettings, ref ILogger log) : base(cmsType, cmsSettings, ref log) {
+        public PrismicHandler(string cmsType, string cmsSettings, ILogger log) : base(cmsType, cmsSettings, log) {
             
             repo = (string)Settings["repo"];
             apiRoot = $"https://{repo}.prismic.io/api/v2";

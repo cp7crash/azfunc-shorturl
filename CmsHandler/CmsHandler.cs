@@ -13,7 +13,7 @@ namespace SirSuperGeek.AzFunc.ShortUrl {
         protected ILogger _log;
         public List<ShortUrlItem> ContentItems { get; }
 
-        public CmsHandler(string cmsType, string cmsSettings, ref ILogger log) {
+        public CmsHandler(string cmsType, string cmsSettings, ILogger log) {
             
             _type = cmsType;
             Settings = new Hashtable();
