@@ -54,3 +54,8 @@ On deployment, relevant configuration will need setting with Azure,  (see [Appli
 - The function uses a simple in-memory cache with a TTL of five minutes, aligned with the non-durable function disposition timer
 - Upon refresh from CMS, short urls are inserted or overwritten only, therefore it doesn't currently support removal/un-publish of URLs  
   _Workarounds: add an empty value to your cms or use storage explorer to delete the entry (both will redirect to default)_
+
+## Contributions
+If anyone finds this remotley useful, are welcome.
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
