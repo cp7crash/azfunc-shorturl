@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-namespace SirSuperGeek.AzFunc.ShortUrl {
+namespace cp7crash.AzFunc.ShortUrl {
 
     interface ICmsHandler {
 

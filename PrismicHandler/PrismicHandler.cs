@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
-namespace SirSuperGeek.AzFunc.ShortUrl.Prismic {
+namespace cp7crash.AzFunc.ShortUrl.Prismic {
 
     public class PrismicHandler : CmsHandler {
 

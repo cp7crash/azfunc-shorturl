@@ -5,7 +5,7 @@ using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace SirSuperGeek.AzFunc.ShortUrl.Prismic
+namespace cp7crash.AzFunc.ShortUrl.Prismic
 {
    
     public partial class RootResponse

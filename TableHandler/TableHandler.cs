@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
-namespace SirSuperGeek.AzFunc.ShortUrl {
+namespace cp7crash.AzFunc.ShortUrl {
 
     public class TableHandler {
 

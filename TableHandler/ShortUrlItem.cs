@@ -1,6 +1,6 @@
 using Microsoft.Azure.Cosmos.Table;
 
-namespace SirSuperGeek.AzFunc.ShortUrl
+namespace cp7crash.AzFunc.ShortUrl
 {
     public class ShortUrlItem : TableEntity
         {

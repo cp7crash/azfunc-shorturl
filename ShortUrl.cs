@@ -9,7 +9,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 
-namespace SirSuperGeek.AzFunc.ShortUrl {
+namespace cp7crash.AzFunc.ShortUrl {
     
     using Prismic;
 
